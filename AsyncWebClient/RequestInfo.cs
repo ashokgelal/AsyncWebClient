@@ -9,9 +9,9 @@ namespace AsyncWebClient
 {
     public class RequestInfo<T>
     {
-        public RequestInfo(string address, Action<ResponseInfo<T>> progressChangedAction = null)
+        public RequestInfo(string remoteResourceAddress, Action<ResponseInfo<T>> progressChangedAction = null)
         {
-            Address = new Uri(address);
+            ServerAddress = new Uri(remoteResourceAddress);
             if (progressChangedAction == null)
             {
                 progressChangedAction = res => { };
@@ -20,7 +20,7 @@ namespace AsyncWebClient
             HeaderCollection = new WebHeaderCollection();
         }
 
-        public Uri Address { get; set; }
+        public Uri ServerAddress { get; set; }
         public WebHeaderCollection HeaderCollection { get; set; }
         public Action<ResponseInfo<T>> ProgressChangedAction { get; set; }
 
