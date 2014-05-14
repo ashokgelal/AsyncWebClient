@@ -9,6 +9,12 @@ using System.Threading.Tasks;
 
 namespace AsyncWebClient
 {
+    /// <summary>
+    ///     An WebClient that is capable of reporting progress of a file upload or
+    ///     download asynchronously.  The use of this class is only appropriate when
+    ///     targeting .NET 4.0. .NET 4.5's WebClient is already capable of doing what
+    ///     this class does and more.
+    /// </summary>
     public class AsyncWebClient<T> : WebClient
     {
         #region Fields
@@ -22,7 +28,22 @@ namespace AsyncWebClient
 
         #region Async Upload
 
-        public Task<ResponseInfo<T>> UploadFileAsync(RequestInfo<T> info, string localFileAddress, T context = default(T))
+        /// <summary>
+        ///     Upload a given local file asynchronously with the specified request.
+        ///     The context object is passed back when reporting progress as well as when
+        ///     the upload is complete.
+        /// </summary>
+        /// <param name="request">
+        ///     A <see cref="RequestInfo{T}" /> object that contains information about
+        ///     this upload request.
+        /// </param>
+        /// <param name="localFileAddress">The full path of the file to be upload.</param>
+        /// <param name="context">
+        ///     A context object that will be passed back when reporting upload progress
+        ///     as well as when the upload is completed, with our without error.
+        /// </param>
+        /// <returns>A Task object that can be awaited.</returns>
+        public Task<ResponseInfo<T>> UploadFileAsync(RequestInfo<T> request, string localFileAddress, T context = default(T))
         {
             if (_uploadTaskCompletionSource != null)
             {
@@ -30,14 +51,14 @@ namespace AsyncWebClient
             }
             _uploadTaskCompletionSource = new TaskCompletionSource<ResponseInfo<T>>();
             Headers.Clear();
-            Headers = info.HeaderCollection;
+            Headers = request.HeaderCollection;
             UploadProgressChanged += OnUploadProgressChanged;
             UploadFileCompleted += OnUploadFileCompleted;
-            UploadFileAsync(info.ServerAddress, localFileAddress, "POST", new Tuple<RequestInfo<T>, T>(info, context));
+            UploadFileAsync(request.ResourceAddress, localFileAddress, "POST", new Tuple<RequestInfo<T>, T>(request, context));
             return _uploadTaskCompletionSource.Task;
         }
 
-        private void OnUploadFileCompleted(object sender, UploadFileCompletedEventArgs args)
+        protected void OnUploadFileCompleted(object sender, UploadFileCompletedEventArgs args)
         {
             UploadProgressChanged -= OnUploadProgressChanged;
             UploadFileCompleted -= OnUploadFileCompleted;
@@ -62,7 +83,22 @@ namespace AsyncWebClient
 
         #region Async Download
 
-        public Task<ResponseInfo<T>> DownloadFileAsync(RequestInfo<T> info, string localFileAddress, T context = default(T))
+        /// <summary>
+        ///     Download a remote file asynchronously with the specified request.
+        ///     The context object is passed back when reporting progress as well as when
+        ///     the download is complete.
+        /// </summary>
+        /// <param name="request">
+        ///     A <see cref="RequestInfo{T}" /> object that contains information about
+        ///     this download request.
+        /// </param>
+        /// <param name="localFileAddress">The name of the file to be placed on the local computer.</param>
+        /// <param name="context">
+        ///     A context object that will be passed back when reporting download progress
+        ///     as well as when the upload is completed, with our without error.
+        /// </param>
+        /// <returns>A Task object that can be awaited.</returns>
+        public Task<ResponseInfo<T>> DownloadFileAsync(RequestInfo<T> request, string localFileAddress, T context = default(T))
         {
             if (_downloadTaskCompletionSource != null)
             {
@@ -70,14 +106,14 @@ namespace AsyncWebClient
             }
             _downloadTaskCompletionSource = new TaskCompletionSource<ResponseInfo<T>>();
             Headers.Clear();
-            Headers = info.HeaderCollection;
+            Headers = request.HeaderCollection;
             DownloadProgressChanged += OnDownloadProgressChanged;
             DownloadFileCompleted += OnDownloadFileCompleted;
-            DownloadFileAsync(info.ServerAddress, localFileAddress, new Tuple<RequestInfo<T>, T>(info, context));
+            DownloadFileAsync(request.ResourceAddress, localFileAddress, new Tuple<RequestInfo<T>, T>(request, context));
             return _downloadTaskCompletionSource.Task;
         }
 
-        private void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs args)
+        protected void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs args)
         {
             DownloadProgressChanged -= OnDownloadProgressChanged;
             DownloadFileCompleted -= OnDownloadFileCompleted;
@@ -91,7 +127,7 @@ namespace AsyncWebClient
             _downloadTaskCompletionSource.TrySetResult(response);
         }
 
-        private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs args)
+        protected void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs args)
         {
             _totalBytesToReceive = args.TotalBytesToReceive;
             var state = (Tuple<RequestInfo<T>, T>) args.UserState;
