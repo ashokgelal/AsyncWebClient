@@ -19,6 +19,7 @@ namespace AsyncWebClient
     {
         #region Fields
 
+        private bool _disposed;
         private TaskCompletionSource<ResponseInfo<T>> _downloadTaskCompletionSource;
         private long _totalBytesToReceive;
         private long _totalBytesToSend;
@@ -144,6 +145,27 @@ namespace AsyncWebClient
             var httpError = ((WebException) error);
             var rawResponse = ((HttpWebResponse) httpError.Response);
             return rawResponse == null ? HttpStatusCode.InternalServerError : rawResponse.StatusCode;
+        }
+
+        #endregion
+
+        #region Dispose
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    UploadProgressChanged -= OnUploadProgressChanged;
+                    UploadFileCompleted -= OnUploadFileCompleted;
+                    DownloadProgressChanged -= OnDownloadProgressChanged;
+                    DownloadFileCompleted -= OnDownloadFileCompleted;
+                }
+                _disposed = true;
+            }
+
+            base.Dispose(disposing);
         }
 
         #endregion
